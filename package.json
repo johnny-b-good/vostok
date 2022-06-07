@@ -1,0 +1,17 @@
+{
+    "name": "vostok",
+    "version": "0.1.0",
+    "description": "File-based CMS for Gemini sites",
+    "keywords": [
+        "gemini"
+    ],
+    "author": "Anton Melnikov",
+    "license": "GPL-2.0",
+    "homepage": "",
+    "repository": {
+        "type": "git",
+        "url": ""
+    },
+    "private": true,
+    "scripts": {}
+}
