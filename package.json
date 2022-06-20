@@ -1,7 +1,7 @@
 {
     "name": "vostok",
     "version": "0.1.0",
-    "description": "File-based CMS for Gemini sites",
+    "description": "A content server for Gemini protocol",
     "keywords": [
         "gemini"
     ],
@@ -13,5 +13,7 @@
         "url": ""
     },
     "private": true,
-    "scripts": {}
+    "scripts": {
+        "start": "node src/vostok.js"
+    }
 }

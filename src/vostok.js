@@ -1,24 +1,27 @@
+#!/usr/bin/env node
+
 const tls = require('node:tls');
 const { URL } = require('node:url');
 const path = require('node:path');
 const fs = require('node:fs');
 const { execSync } = require('node:child_process');
 
-const HOST = 'localhost';
-const PORT = 1964;
-const BASE_URL = `gemini://${HOST}:${PORT}/`;
-const CERT_PATH = path.join(__dirname, '..', 'vostok-cert.pem');
-const KEY_PATH = path.join(__dirname, '..', 'vostok-key.pem');
-const CONTENT_ROOT = path.join(__dirname, '..', 'content');
-const CONTENT_LANG = 'ru';
-const CONTENT_CHARSET = 'utf-8';
+const PROJECT_ROOT = path.join(__dirname, '..');
+const CONFIG_ROOT = process.env.VOSTOK_CONFIG_ROOT ?? PROJECT_ROOT;
+const CONFIG_PATH = path.join(CONFIG_ROOT, 'config.json');
+const CERT_PATH = path.join(CONFIG_ROOT, 'vostok-cert.pem');
+const KEY_PATH = path.join(CONFIG_ROOT, 'vostok-key.pem');
+const CONTENT_ROOT =
+    process.env.VOSTOK_CONTENT_ROOT ?? path.join(PROJECT_ROOT, 'content');
+const TLS_OPTIONS = makeTlsOptions();
+const CONFIG = readServerConfig();
+const HOST = CONFIG.host ?? 'localhost';
+const PORT = CONFIG.port ?? 1964;
+const CONTENT_LANG = CONFIG.contentLang;
+const CONTENT_CHARSET = CONFIG.contentCharset;
+const GEMINI_SUCCESS_HEADER = makeSuccessHeader(CONTENT_CHARSET, CONTENT_LANG);
 
-const cert = fs.readFileSync(CERT_PATH);
-const key = fs.readFileSync(KEY_PATH);
-
-const serverConfig = { key, cert };
-
-const server = tls.createServer(serverConfig, (socket) => {
+const server = tls.createServer(TLS_OPTIONS, function onSocketConnect(socket) {
     socket.on('data', (data) => {
         const { header, content } = handleRequest(data);
 
@@ -28,11 +31,16 @@ const server = tls.createServer(serverConfig, (socket) => {
         }
         socket.end();
 
+        let resSize = Buffer.byteLength(header, 'utf8');
+        if (content) {
+            resSize += Buffer.byteLength(content, 'utf8');
+        }
+
         writeAccessLog({
             ip: socket.address().address,
             req: data.toString('utf-8').trim(),
             resStatus: header.split(' ')[0],
-            resSize: Buffer.byteLength(content, 'utf8'),
+            resSize,
         });
     });
 });
@@ -41,7 +49,7 @@ server.listen(PORT, HOST, () => {
     console.log(`Vostok server listens on ${HOST}:${PORT}`);
 });
 
-server.on('error', (err) => {
+server.on('error', function onServerError(err) {
     console.error('Error occured:', err);
     server.destroy();
     process.exit(1);
@@ -109,7 +117,7 @@ function readFile(reqPath) {
 
     if (isGeminiFile) {
         return {
-            header: `20 text/gemini; charset=${CONTENT_CHARSET}; lang=${CONTENT_LANG}\r\n`,
+            header: GEMINI_SUCCESS_HEADER,
             content,
         };
     } else {
@@ -153,19 +161,51 @@ function makeDirIndex(reqPath) {
     } else {
         for (const dir of dirList) {
             let dirName = dir.isDirectory() ? dir.name + '/' : dir.name;
-            const dirUrl = new URL(`${relReqPath}/${dirName}`, BASE_URL);
+            const dirUrl = encodeURI(`/${relReqPath}/${dirName}`);
             content += `=> ${dirUrl.toString()} ${dirName}\n`;
         }
     }
 
     return {
-        header: `20 text/gemini; charset=${CONTENT_CHARSET}; lang=${CONTENT_LANG}\r\n`,
+        header: GEMINI_SUCCESS_HEADER,
         content,
     };
 }
 
 function writeAccessLog({ ip, req, resStatus, resSize }) {
     console.log(
+        // Apache's access log date format is different, actually
         `${ip} - - [${new Date().toISOString()}] "${req}" ${resStatus} ${resSize}`
     );
+}
+
+function readServerConfig() {
+    try {
+        const configStr = fs.readFileSync(CONFIG_PATH);
+        const config = JSON.parse(configStr);
+        return config;
+    } catch (err) {
+        throw new Error('Cannot read config file');
+    }
+}
+
+function makeTlsOptions() {
+    try {
+        const cert = fs.readFileSync(CERT_PATH);
+        const key = fs.readFileSync(KEY_PATH);
+        return { key, cert };
+    } catch {
+        throw new Error('Cannot read SSL cert files');
+    }
+}
+
+function makeSuccessHeader(charset, lang) {
+    const headerParts = ['20 text/gemini'];
+    if (charset) {
+        headerParts.push(`charset=${charset}`);
+    }
+    if (lang) {
+        headerParts.push(`lang=${lang}`);
+    }
+    return headerParts.join('; ') + '\r\n';
 }
