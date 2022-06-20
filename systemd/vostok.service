@@ -1,0 +1,23 @@
+[Unit]
+Description=A content server for Gemini protocol
+
+[Service]
+WorkingDirectory=/opt/vostok
+ExecStart=/usr/bin/env node /opt/vostok/vostok.js
+
+Restart=always
+RestartSec=5s
+StartLimitBurst=3
+StartLimitInterval=60
+
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=vostok
+
+User=vostok
+Group=vostok
+
+Environment=NODE_ENV=production VOSTOK_CONTENT_ROOT=/srv/vostok VOSTOK_CONFIG_ROOT=/etc/vostok
+
+[Install]
+WantedBy=multi-user.target
