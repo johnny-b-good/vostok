@@ -13,8 +13,8 @@ const CERT_PATH = path.join(CONFIG_ROOT, 'vostok-cert.pem');
 const KEY_PATH = path.join(CONFIG_ROOT, 'vostok-key.pem');
 const CONTENT_ROOT =
     process.env.VOSTOK_CONTENT_ROOT ?? path.join(PROJECT_ROOT, 'content');
-const TLS_OPTIONS = makeTlsOptions();
-const CONFIG = readServerConfig();
+const TLS_OPTIONS = makeTlsOptions(CERT_PATH, KEY_PATH);
+const CONFIG = readServerConfig(CONFIG_PATH);
 const HOST = CONFIG.host ?? 'localhost';
 const PORT = CONFIG.port ?? 1964;
 const CONTENT_LANG = CONFIG.contentLang;
@@ -22,8 +22,8 @@ const CONTENT_CHARSET = CONFIG.contentCharset;
 const GEMINI_SUCCESS_HEADER = makeSuccessHeader(CONTENT_CHARSET, CONTENT_LANG);
 
 const server = tls.createServer(TLS_OPTIONS, function onSocketConnect(socket) {
-    socket.on('data', (data) => {
-        const { header, content } = handleRequest(data);
+    socket.on('data', function handleRequest(data) {
+        const { header, content } = makeResponse(data);
 
         socket.write(header);
         if (content) {
@@ -45,7 +45,7 @@ const server = tls.createServer(TLS_OPTIONS, function onSocketConnect(socket) {
     });
 });
 
-server.listen(PORT, HOST, () => {
+server.listen(PORT, HOST, function onServerStart() {
     console.log(`Vostok server listens on ${HOST}:${PORT}`);
 });
 
@@ -55,7 +55,7 @@ server.on('error', function onServerError(err) {
     process.exit(1);
 });
 
-function handleRequest(reqData) {
+function makeResponse(reqData) {
     const reqString = reqData.toString('utf-8').trim();
 
     let reqUrl;
@@ -86,15 +86,15 @@ function handleRequest(reqData) {
     }
 
     if (reqPathStats.isFile()) {
-        return readFile(reqPath);
+        return makeFileResponse(reqPath);
     } else if (reqPathStats.isDirectory()) {
-        return readDir(reqPath);
+        return makeDirResponse(reqPath);
     } else {
         return { header: '51 Not found\r\n' };
     }
 }
 
-function readFile(reqPath) {
+function makeFileResponse(reqPath) {
     let content;
     try {
         content = fs.readFileSync(reqPath);
@@ -125,27 +125,26 @@ function readFile(reqPath) {
     }
 }
 
-function readDir(reqPath) {
+function makeDirResponse(reqPath) {
     let indexPath;
 
     indexPath = path.join(reqPath, 'index.gmi');
     if (fs.existsSync(indexPath)) {
-        return readFile(indexPath);
+        return makeFileResponse(indexPath);
     }
 
     indexPath = path.join(reqPath, 'index.gemini');
     if (fs.existsSync(indexPath)) {
-        return readFile(indexPath);
+        return makeFileResponse(indexPath);
     }
 
-    return makeDirIndex(reqPath);
+    return makeDirIndexResponse(reqPath);
 }
 
-function makeDirIndex(reqPath) {
+function makeDirIndexResponse(reqPath) {
     let dirList;
     try {
         dirList = fs.readdirSync(reqPath, {
-            encoding: CONTENT_CHARSET,
             withFileTypes: true,
         });
     } catch {
@@ -174,14 +173,14 @@ function makeDirIndex(reqPath) {
 
 function writeAccessLog({ ip, req, resStatus, resSize }) {
     console.log(
-        // Apache's access log date format is different, actually
+        // TODO: Apache's access log date format is different, actually
         `${ip} - - [${new Date().toISOString()}] "${req}" ${resStatus} ${resSize}`
     );
 }
 
-function readServerConfig() {
+function readServerConfig(configPath) {
     try {
-        const configStr = fs.readFileSync(CONFIG_PATH);
+        const configStr = fs.readFileSync(configPath);
         const config = JSON.parse(configStr);
         return config;
     } catch (err) {
@@ -189,10 +188,10 @@ function readServerConfig() {
     }
 }
 
-function makeTlsOptions() {
+function makeTlsOptions(certPath, keyPath) {
     try {
-        const cert = fs.readFileSync(CERT_PATH);
-        const key = fs.readFileSync(KEY_PATH);
+        const cert = fs.readFileSync(certPath);
+        const key = fs.readFileSync(keyPath);
         return { key, cert };
     } catch {
         throw new Error('Cannot read SSL cert files');
