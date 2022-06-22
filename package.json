@@ -7,13 +7,20 @@
     ],
     "author": "Anton Melnikov",
     "license": "GPL-2.0",
-    "homepage": "",
+    "homepage": "https://github.com/johnny-b-good/vostok",
     "repository": {
         "type": "git",
-        "url": ""
+        "url": "https://github.com/johnny-b-good/vostok.git"
     },
     "private": true,
     "scripts": {
         "start": "node src/vostok.js"
+    },
+    "devDependencies": {
+        "eslint": "^8.18.0",
+        "prettier": "^2.7.1"
+    },
+    "engines": {
+        "node": ">=14"
     }
 }
