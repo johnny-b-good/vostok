@@ -1,26 +1,28 @@
 {
-    "name": "vostok",
-    "version": "0.1.0",
-    "description": "A content server for Gemini protocol",
-    "keywords": [
-        "gemini"
-    ],
-    "author": "Anton Melnikov",
-    "license": "GPL-2.0",
-    "homepage": "https://github.com/johnny-b-good/vostok",
-    "repository": {
-        "type": "git",
-        "url": "https://github.com/johnny-b-good/vostok.git"
-    },
-    "private": true,
-    "scripts": {
-        "start": "node src/vostok.js"
-    },
-    "devDependencies": {
-        "eslint": "^8.18.0",
-        "prettier": "^2.7.1"
-    },
-    "engines": {
-        "node": ">=14"
-    }
+  "name": "vostok",
+  "version": "0.1.0",
+  "description": "A content server for Gemini protocol",
+  "keywords": [
+    "gemini"
+  ],
+  "author": "Anton Melnikov",
+  "license": "GPL-2.0",
+  "homepage": "https://github.com/johnny-b-good/vostok",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/johnny-b-good/vostok.git"
+  },
+  "private": true,
+  "scripts": {
+    "start": "node src/vostok.js"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.5.0",
+    "eslint": "^9.5.0",
+    "globals": "^15.5.0",
+    "prettier": "^3.3.2"
+  },
+  "engines": {
+    "node": ">=14"
+  }
 }
