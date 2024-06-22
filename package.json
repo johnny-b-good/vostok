@@ -14,7 +14,7 @@
   },
   "private": true,
   "scripts": {
-    "start": "node src/vostok.js"
+    "start": "node --env-file=.env src/vostok.js"
   },
   "devDependencies": {
     "@eslint/js": "^9.5.0",
@@ -23,6 +23,6 @@
     "prettier": "^3.3.2"
   },
   "engines": {
-    "node": ">=14"
+    "node": ">=20"
   }
 }

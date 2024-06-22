@@ -6,18 +6,13 @@ const path = require("node:path");
 const fs = require("node:fs");
 const { execSync } = require("node:child_process");
 
-const PROJECT_ROOT = path.join(__dirname, "..");
-const CONFIG_PATH =
-  process.env.VOSTOK_CONFIG_PATH ?? path.join(PROJECT_ROOT, "config.json");
-const CONFIG = readServerConfig(CONFIG_PATH);
-
-const HOST = CONFIG.host ?? "localhost";
-const PORT = CONFIG.port ?? 1965;
-const CERT_PATH = CONFIG.certPath ?? path.join(PROJECT_ROOT, "vostok-cert.pem");
-const KEY_PATH = CONFIG.keyPath ?? path.join(PROJECT_ROOT, "vostok-key.pem");
-const CONTENT_ROOT = CONFIG.contentRoot ?? path.join(PROJECT_ROOT, "content");
-const CONTENT_LANG = CONFIG.contentLang ?? "en";
-const CONTENT_CHARSET = CONFIG.contentCharset ?? "UTF-8";
+const HOST = process.env.VOSTOK_HOST ?? "localhost";
+const PORT = process.env.VOSTOK_PORT ?? 1965;
+const CERT_PATH = process.env.VOSTOK_CERT_PATH ?? "vostok-cert.pem";
+const KEY_PATH = process.env.VOSTOK_KEY_PATH ?? "vostok-key.pem";
+const CONTENT_ROOT = process.env.VOSTOK_CONTENT_ROOT ?? "content";
+const CONTENT_LANG = process.env.VOSTOK_CONTENT_LANG ?? "en";
+const CONTENT_CHARSET = process.env.VOSTOK_CONTENT_CHARSET ?? "UTF-8";
 
 const RESPONSES = {
   SUCCESS: makeTextSuccessHeader(CONTENT_CHARSET, CONTENT_LANG),
@@ -183,16 +178,6 @@ function writeLog({ reqString, resCode, logLevel, reqIp }) {
   console.log(
     `[${new Date().toISOString()}] [${logLevel}] ${reqIp} "${reqString}" ${resCode}`,
   );
-}
-
-function readServerConfig(configPath) {
-  try {
-    const configStr = fs.readFileSync(configPath);
-    const config = JSON.parse(configStr);
-    return config;
-  } catch {
-    throw new Error("Cannot read config file");
-  }
 }
 
 function makeTlsOptions(certPath, keyPath) {

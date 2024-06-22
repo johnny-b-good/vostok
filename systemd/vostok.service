@@ -14,10 +14,7 @@ StandardOutput=syslog
 StandardError=syslog
 SyslogIdentifier=vostok
 
-User=vostok
-Group=vostok
-
-Environment=NODE_ENV=production VOSTOK_CONFIG_PATH=/srv/vostok/config.json
+EnvironmentFile=/opt/vostok/.env
 
 [Install]
 WantedBy=multi-user.target

@@ -5,4 +5,4 @@ node_modules
 
 content
 *.pem
-config.json
+.env
