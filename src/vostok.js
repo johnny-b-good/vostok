@@ -46,15 +46,23 @@ const server = tls.createServer(
   },
 );
 
-server.listen(PORT, HOST, function onServerStart() {
-  console.log(`Vostok server listens on ${HOST}:${PORT}`);
+server.listen(PORT, function onServerStart() {
+  console.log(`Vostok server listens on port ${PORT}`);
 });
 
 server.on("error", function onServerError(err) {
   console.error("Error occured:", err);
-  server.destroy();
   process.exit(1);
 });
+
+process.on("SIGINT", stopServer);
+process.on("SIGTERM", stopServer);
+
+async function stopServer() {
+  console.log("Stopping server");
+  await server.close();
+  process.exit(0);
+}
 
 function makeResponse(reqString) {
   let reqUrl;

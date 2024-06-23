@@ -1,0 +1,29 @@
+services:
+  server:
+    build:
+      context: .
+    expose:
+      - ${VOSTOK_PORT}
+    ports:
+      - ${VOSTOK_PORT}:${VOSTOK_PORT}
+    logging:
+      driver: "local"
+    environment:
+      - NODE_ENV=${NODE_ENV}
+      - VOSTOK_HOST=${VOSTOK_HOST}
+      - VOSTOK_PORT=${VOSTOK_PORT}
+      - VOSTOK_CERT_PATH=vostok-cert.pem
+      - VOSTOK_KEY_PATH=vostok-key.pem
+      - VOSTOK_CONTENT_ROOT=content
+      - VOSTOK_CONTENT_LANG=${VOSTOK_CONTENT_LANG}
+      - VOSTOK_CONTENT_CHARSET=${VOSTOK_CONTENT_CHARSET}
+    volumes:
+      - type: bind
+        source: ${VOSTOK_CERT_PATH}
+        target: /opt/vostok/vostok-cert.pem
+      - type: bind
+        source: ${VOSTOK_KEY_PATH}
+        target: /opt/vostok/vostok-key.pem
+      - type: bind
+        source: ${VOSTOK_CONTENT_ROOT}
+        target: /opt/vostok/content
